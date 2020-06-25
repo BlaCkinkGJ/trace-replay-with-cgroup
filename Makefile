@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Werror -Wformat -Wpedantic
 TARGET=a.out
-OBJECTS=main.o
+OBJECTS=src/main.o
 
 all: $(TARGET)
 	 ./a.out

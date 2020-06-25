@@ -53,5 +53,7 @@ dkms.conf
 
 # User defined ignore
 *.log
+*.txt
 *.out
 .cmdline_history
+.search_history
