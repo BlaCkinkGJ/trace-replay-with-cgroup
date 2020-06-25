@@ -53,3 +53,5 @@ dkms.conf
 
 # User defined ignore
 *.log
+*.out
+.cmdline_history
