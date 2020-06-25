@@ -15,11 +15,25 @@
 #define MAX_COMMAND_SIZE (1024)
 #define DEFAULT_WEIGHT (100)
 #define PREFIX_CGOURP_NAME "tester.trace."
+#define NONE_SCHEDULER
+
+#ifdef NONE_SCHEDULER
+#define IO_SCHEDULER "none"
+#endif
+#ifdef BFQ_SCHEDULER
+#define IO_SCHEDULER "bfq"
+#endif
+#ifdef KYBER_SCHEDULER
+#define IO_SCHEDULER "kyber"
+#endif
+
+#define Q_DEPTH "32"
+#define NR_THREAD "4"
 
 /***** FUNCTION DECLARATION PART *****/
 int read_config_file(const char *file_name, int weight[],
 		     char bench_file[MAX_TASK][FILENAME_MAX]);
-int bench_exec_process(int weight, char bench_file[]);
+int bench_exec_process(int weight, char _bench_file[]);
 int set_cgroup_state(const pid_t pid, const int weight);
 
 /***** MAIN PART *****/
@@ -101,24 +115,29 @@ int read_config_file(const char *file_name, int weight[],
 	return ret;
 }
 
-int bench_exec_process(int weight, char bench_file[])
+int bench_exec_process(int weight, char _bench_file[])
 {
 	char file_name[FILENAME_MAX] = { 0 };
+	char bench_file[FILENAME_MAX] = { 0 };
 	char *token;
 	int fd = 0;
+
+	strcpy(bench_file, _bench_file);
 
 	WAIT_PARENT(); /* wait parent's start signal */
 	token = strtok(bench_file, "/");
 	token = strtok(NULL, token);
 	token = strtok(token, ".");
-	sprintf(file_name, "%d_%d_%s.out", getpid(), weight, token);
+	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.out", getpid(), weight,
+		token);
 	fd = open(file_name, O_CREAT | O_WRONLY, 0755);
 	dup2(fd, STDOUT_FILENO); /* redirect */
 	close(fd);
-	sprintf(file_name, "%d_%d_%s.txt", getpid(), weight, token);
-	if (execlp("./bin/trace_replay", "trace_replay", "32", "8", file_name,
-		   "60", "1", "/dev/nvme0n1", bench_file, "0", "0", "0",
-		   (char *)0) < 0) {
+	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getpid(), weight,
+		token);
+	if (execlp("./bin/trace_replay", "trace_replay", Q_DEPTH, NR_THREAD,
+		   file_name, "60", "1", "/dev/nvme0n1", _bench_file, "0", "0",
+		   "0", (char *)0) < 0) {
 		fprintf(stderr, "execlp running failed...(errno: %d)\n", errno);
 		return errno;
 	}
@@ -130,6 +149,14 @@ int set_cgroup_state(const pid_t pid, const int weight)
 	int ret;
 	char buffer[sysconf(_SC_ARG_MAX)];
 
+	sprintf(buffer,
+		"echo " IO_SCHEDULER ">> /sys/block/nvme0n1/queue/scheduler");
+	ret = system(buffer);
+	if (ret) {
+		fprintf(stderr, "Cannot run command (%s)\n", buffer);
+		return -EFAULT;
+	}
+
 	sprintf(buffer, "mkdir /sys/fs/cgroup/blkio/" PREFIX_CGOURP_NAME "%d",
 		pid);
 	ret = system(buffer);
@@ -138,15 +165,17 @@ int set_cgroup_state(const pid_t pid, const int weight)
 		return -EFAULT;
 	}
 
+#ifndef NONE_SCHEDULER
 	sprintf(buffer,
 		"echo %d > /sys/fs/cgroup/blkio/" PREFIX_CGOURP_NAME
-		"%d/blkio.kyber.weight",
+		"%d/blkio." IO_SCHEDULER ".weight",
 		weight, pid);
 	ret = system(buffer);
 	if (ret) {
 		fprintf(stderr, "Cannot run command (%s)\n", buffer);
 		return -EFAULT;
 	}
+#endif
 
 	sprintf(buffer,
 		"echo %d > /sys/fs/cgroup/blkio/" PREFIX_CGOURP_NAME "%d/tasks",

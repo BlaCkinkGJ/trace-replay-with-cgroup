@@ -1,4 +1,4 @@
 100 sample/sample1.dat
-250 sample/sample2.dat
+250 sample/sample1.dat
 500 sample/sample1.dat
-750 sample/sample2.dat
+1000 sample/sample1.dat
