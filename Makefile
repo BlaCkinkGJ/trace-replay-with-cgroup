@@ -4,7 +4,7 @@ TARGET=a.out
 OBJECTS=src/main.o
 
 all: $(TARGET)
-	 ./a.out
+	 #./a.out
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $^

@@ -15,7 +15,7 @@
 #define MAX_COMMAND_SIZE (1024)
 #define DEFAULT_WEIGHT (100)
 #define PREFIX_CGOURP_NAME "tester.trace."
-#define NONE_SCHEDULER
+#define KYBER_SCHEDULER /* << change!! */
 
 #ifdef NONE_SCHEDULER
 #define IO_SCHEDULER "none"
@@ -55,7 +55,7 @@ int main()
 	memset(weight, DEFAULT_WEIGHT, sizeof(weight));
 	memset(bench_file, 0, sizeof(bench_file));
 
-	ret = read_config_file("config.txt", weight, bench_file);
+	ret = read_config_file("config.cfg", weight, bench_file);
 	if (ret < 0) {
 		fprintf(stderr, "File has invalid data....\n");
 		return ret;
@@ -128,12 +128,12 @@ int bench_exec_process(int weight, char _bench_file[])
 	token = strtok(bench_file, "/");
 	token = strtok(NULL, token);
 	token = strtok(token, ".");
-	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.out", getpid(), weight,
+	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.out", getppid(), weight,
 		token);
 	fd = open(file_name, O_CREAT | O_WRONLY, 0755);
 	dup2(fd, STDOUT_FILENO); /* redirect */
 	close(fd);
-	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getpid(), weight,
+	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getppid(), weight,
 		token);
 	if (execlp("./bin/trace_replay", "trace_replay", Q_DEPTH, NR_THREAD,
 		   file_name, "60", "1", "/dev/nvme0n1", _bench_file, "0", "0",
@@ -185,5 +185,6 @@ int set_cgroup_state(const pid_t pid, const int weight)
 		fprintf(stderr, "Cannot run command (%s)\n", buffer);
 		return -EFAULT;
 	}
+	fprintf(stdout, "%d's cgroup is ready\n", pid);
 	return ret;
 }
