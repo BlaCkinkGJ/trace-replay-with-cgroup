@@ -76,6 +76,7 @@ int main()
 	}
 
 	/* parent process */
+	fprintf(stdout, "parent pid: %d\n", getpid());
 	for (int i = 0; i < 4; i++) { /* Start trace notify */
 		set_cgroup_state(pids[i], weight[i]);
 		TELL_CHILD(pids[i]);
