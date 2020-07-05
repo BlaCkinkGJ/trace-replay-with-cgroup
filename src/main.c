@@ -32,7 +32,9 @@
 #define MAX_COMMAND_SIZE (1024)
 #define DEFAULT_WEIGHT (100)
 #define PREFIX_CGOURP_NAME "tester.trace."
-#define KYBER_SCHEDULER /* << change!! */
+#define TIME "600"
+#define LOCATION "/dev/mydevice"
+#define BFQ_SCHEDULER /* << change!! */
 
 #ifdef NONE_SCHEDULER
 #define IO_SCHEDULER "none"
@@ -154,7 +156,7 @@ int bench_exec_process(int weight, char _bench_file[])
 	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getppid(), weight,
 		token);
 	if (execlp("./bin/trace_replay", "trace_replay", Q_DEPTH, NR_THREAD,
-		   file_name, "60", "1", "/dev/nvme0n1", _bench_file, "0", "0",
+		   file_name, TIME, "1", LOCATION, _bench_file, "0", "0",
 		   "0", (char *)0) < 0) {
 		fprintf(stderr, "execlp running failed...(errno: %d)\n", errno);
 		return errno;
