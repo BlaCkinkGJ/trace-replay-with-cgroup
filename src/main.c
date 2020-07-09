@@ -52,7 +52,7 @@
 /***** FUNCTION DECLARATION PART *****/
 int read_config_file(const char *file_name, int weight[],
 		     char bench_file[MAX_TASK][FILENAME_MAX]);
-int bench_exec_process(int weight, char _bench_file[]);
+int bench_exec_process(int weight, char _bench_file[], const char *path);
 int set_cgroup_state(const pid_t pid, const int weight);
 
 /***** MAIN PART *****/
@@ -86,7 +86,10 @@ int main()
 		if ((pid = fork()) < 0) { /* fork failed */
 			fprintf(stderr, "Fork failed...\n");
 		} else if (pid == 0) { /* child process */
-			if (bench_exec_process(weight[i], bench_file[i])) {
+			char buffer[FILENAME_MAX];
+			sprintf(buffer, "%s%d", LOCATION, i);
+			if (bench_exec_process(weight[i], bench_file[i],
+					       buffer)) {
 				return errno;
 			}
 		}
@@ -135,7 +138,7 @@ int read_config_file(const char *file_name, int weight[],
 	return ret;
 }
 
-int bench_exec_process(int weight, char _bench_file[])
+int bench_exec_process(int weight, char _bench_file[], const char *path)
 {
 	char file_name[FILENAME_MAX] = { 0 };
 	char bench_file[FILENAME_MAX] = { 0 };
@@ -156,7 +159,7 @@ int bench_exec_process(int weight, char _bench_file[])
 	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getppid(), weight,
 		token);
 	if (execlp("./bin/trace_replay", "trace_replay", Q_DEPTH, NR_THREAD,
-		   file_name, TIME, "1", LOCATION, _bench_file, "0", "0", "0",
+		   file_name, TIME, "1", path, _bench_file, "0", "0", "0",
 		   (char *)0) < 0) {
 		fprintf(stderr, "execlp running failed...(errno: %d)\n", errno);
 		return errno;
