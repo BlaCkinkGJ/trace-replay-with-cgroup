@@ -96,7 +96,7 @@ int main()
 
 	/* parent process */
 	fprintf(stdout, "parent pid: %d\n", getpid());
-	for (int i = 0; i < 4; i++) { /* Start trace notify */
+	for (int i = 0; i < MAX_TASK; i++) { /* Start trace notify */
 		set_cgroup_state(pids[i], weight[i]);
 		TELL_CHILD(pids[i]);
 	}
@@ -156,8 +156,8 @@ int bench_exec_process(int weight, char _bench_file[])
 	sprintf(file_name, IO_SCHEDULER "_%d_%d_%s.txt", getppid(), weight,
 		token);
 	if (execlp("./bin/trace_replay", "trace_replay", Q_DEPTH, NR_THREAD,
-		   file_name, TIME, "1", LOCATION, _bench_file, "0", "0",
-		   "0", (char *)0) < 0) {
+		   file_name, TIME, "1", LOCATION, _bench_file, "0", "0", "0",
+		   (char *)0) < 0) {
 		fprintf(stderr, "execlp running failed...(errno: %d)\n", errno);
 		return errno;
 	}
